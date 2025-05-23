@@ -1,26 +1,32 @@
+
 import os
-from loguru import logger
+from fastapi import FastAPI
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.chrome.service import Service
-
+from loguru import logger
+from threading import Thread
+import time
 
 logger.add('./logs/today.log', level="ERROR", rotation="1 day", retention="10 days")
 
-def _check_label(label: str) -> bool:
+app = FastAPI()
+alert_status = {}
+
+def check_label(label: str) -> bool:
     if not label:
         return False
     ukr_letters = set("абвгґдеєжзиіїйклмнопрстуфхцчшщьюя")
     return any(l in ukr_letters for l in label)
 
 def get_air_alerts_status():
+    global alert_status
     options = Options()
-    options.add_argument("--window-size=1024,768")
-    options.add_argument("--headless")  # включи, если не нужен интерфейс
+    options.add_argument("--headless")
     options.add_argument("--disable-gpu")
     options.add_argument("--no-sandbox")
-
+    options.add_argument("--window-size=1024,768")
     service = Service(log_path=os.devnull)
     driver = webdriver.Chrome(options=options, service=service)
 
@@ -33,28 +39,29 @@ def get_air_alerts_status():
 
         for el in elements:
             label = el.text.strip()
-            if not _check_label(label):
+            if not check_label(label):
                 continue
 
             class_attr = el.get_attribute("class")
             is_alert = "active" in class_attr
             regions[label] = is_alert
 
-        return regions
-
+        alert_status = regions
+        logger.success("Данные тревоги обновлены.")
     except Exception as e:
-        logger.error(e)
-        return {}
-
+        logger.error(f"Ошибка при обновлении тревог: {e}")
     finally:
         driver.quit()
 
+def periodic_task():
+    while True:
+        get_air_alerts_status()
+        time.sleep(600)  # каждые 10 минут
 
-if __name__ == "__main__":
-    alerts = get_air_alerts_status()
-    print(alerts)
-    for region, status in alerts.items():
-        if status:
-            logger.warning(f"🚨 {region}: 'ТРЕВОГА'")
-        else:
-            logger.success(f"✅ {region}: 'спокойно'")
+@app.on_event("startup")
+def startup_event():
+    Thread(target=periodic_task, daemon=True).start()
+
+@app.get("/status")
+def get_status():
+    return alert_status
