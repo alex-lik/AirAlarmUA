@@ -19,11 +19,13 @@ logger.add('./logs/today.log', level="ERROR", rotation="1 day", retention="10 da
 app = FastAPI()
 alert_status = {}
 
+
 def check_label(label: str) -> bool:
     if not label:
         return False
     ukr_letters = set("абвгґдеєжзиіїйклмнопрстуфхцчшщьюя")
     return any(l in ukr_letters for l in label)
+
 
 def get_air_alerts_status():
     global alert_status
@@ -58,18 +60,26 @@ def get_air_alerts_status():
     finally:
         driver.quit()
 
+
 def periodic_task():
     while True:
         get_air_alerts_status()
         time.sleep(600)  # каждые 10 минут
 
+
 @app.on_event("startup")
 def startup_event():
     Thread(target=periodic_task, daemon=True).start()
 
+
 @app.get("/status")
 def get_status():
     return alert_status
+
+
+@app.get("/health")
+def health_check():
+    return {"status": "ok"}
 
 
 @app.get("/sentry-debug")
