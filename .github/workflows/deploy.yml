@@ -38,6 +38,7 @@ jobs:
           script: |
             cd /home/prod/air-alert-api
             echo "${{ secrets.ENV_FILE }}" > .env
+            echo "SENTRY_DSN=${{ secrets.SENTRY_DSN }}" >> .env
 
             if [ "${{ env.BUILD_IMAGE }}" = "true" ]; then
               echo "🔄 Изменения найдены — пересобираем образ..."
