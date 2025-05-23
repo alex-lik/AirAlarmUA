@@ -8,6 +8,11 @@ from selenium.webdriver.chrome.service import Service
 from loguru import logger
 from threading import Thread
 import time
+import sentry_sdk
+
+SENTRY_DSN = os.getenv("SENTRY_DSN")
+
+sentry_sdk.init(dsn=SENTRY_DSN, send_default_pii=True)
 
 logger.add('./logs/today.log', level="ERROR", rotation="1 day", retention="10 days")
 
@@ -65,3 +70,8 @@ def startup_event():
 @app.get("/status")
 def get_status():
     return alert_status
+
+
+@app.get("/sentry-debug")
+async def trigger_error():
+    division_by_zero = 1 / 0
