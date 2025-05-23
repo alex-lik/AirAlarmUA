@@ -10,14 +10,6 @@ jobs:
       - name: checkout code
         uses: actions/checkout@v3
 
-      - name: Detect changes in requirements.txt
-        id: check_changes
-        run: |
-          if git diff --name-only ${{ github.event.before }} ${{ github.sha }} | grep -qE '(^Dockerfile$|docker-compose.yml|requirements.txt)'; then
-            echo "BUILD_IMAGE=true" >> $GITHUB_ENV
-          else
-            echo "BUILD_IMAGE=false" >> $GITHUB_ENV
-          fi
       - name: Copy project to server
         uses: appleboy/scp-action@master
         with:
@@ -39,13 +31,6 @@ jobs:
             cd /home/prod/air-alert-api
             echo "${{ secrets.ENV_FILE }}" > .env
             echo "SENTRY_DSN=${{ secrets.SENTRY_DSN }}" >> .env
-
-            if [ "${{ env.BUILD_IMAGE }}" = "true" ]; then
-              echo "🔄 Изменения найдены — пересобираем образ..."
-              docker compose build
-            else
-              echo "✅ Изменений нет — пересборка не требуется."
-            fi
 
             echo "🚀 Перезапуск контейнера..."
             docker compose down
