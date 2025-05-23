@@ -32,6 +32,9 @@ jobs:
             echo "${{ secrets.ENV_FILE }}" > .env
             echo "SENTRY_DSN=${{ secrets.SENTRY_DSN }}" >> .env
 
+            docker compose build
+ 
+
             echo "🚀 Перезапуск контейнера..."
             docker compose down
             docker compose up -d
