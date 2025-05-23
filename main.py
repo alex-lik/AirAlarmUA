@@ -1,20 +1,21 @@
 
 import os
+import time
+from threading import Thread
 from fastapi import FastAPI
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.chrome.service import Service
 from loguru import logger
-from threading import Thread
-import time
 import sentry_sdk
 
 SENTRY_DSN = os.getenv("SENTRY_DSN")
 
 sentry_sdk.init(dsn=SENTRY_DSN, send_default_pii=True)
 
-logger.add('./logs/today.log', level="ERROR", rotation="1 day", retention="10 days")
+logger.add('./logs/today.log', level="ERROR",
+           rotation="1 day", retention="10 days")
 
 app = FastAPI()
 alert_status = {}
