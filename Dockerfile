@@ -1,21 +1,26 @@
 
-# Этап 1: установка зависимостей
-FROM python:3.13-slim as builder
-
-WORKDIR /build
-COPY requirements.txt .
-RUN pip install --upgrade pip && pip install --user -r requirements.txt
-
-# Этап 2: финальный образ
 FROM python:3.13-slim
 
-ENV PATH=/root/.local/bin:$PATH
+# Установка зависимостей системы
+RUN apt-get update && apt-get install -y \
+    wget unzip curl gnupg \
+    chromium chromium-driver \
+    && rm -rf /var/lib/apt/lists/*
+
+# Установка зависимостей Python
+COPY requirements.txt /app/requirements.txt
 WORKDIR /app
+RUN pip install --no-cache-dir -r requirements.txt
 
-# Копируем только нужное
-COPY --from=builder /root/.local /root/.local
-COPY . .
+# Копируем приложение
+COPY . /app
 
+# Переменные окружения
+ENV PYTHONUNBUFFERED=1
+ENV PYTHONDONTWRITEBYTECODE=1
+
+# Порт API
 EXPOSE 8000
 
+# Запуск FastAPI
 CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
