@@ -1,0 +1,13 @@
+
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.log
+*.md
+*.env
+logs/
+.git/
+.gitignore
+.dockerignore
+tests/
