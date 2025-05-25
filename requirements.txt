@@ -3,3 +3,7 @@ loguru==0.7.3
 fastapi==0.115.12
 uvicorn==0.34.2
 sentry-sdk[fastapi]
+prometheus_client==0.22.0
+prometheus_fastapi_instrumentator==7.1.0
+slowapi==0.1.9
+requests==2.32.3
