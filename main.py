@@ -74,10 +74,13 @@ update_timestamp = Gauge("air_alert_last_update_timestamp",
                          "Последнее обновление в формате UNIX-времени")
 
 
-sentry_sdk.init(
-    dsn=os.getenv("SENTRY_DSN"),
-    send_default_pii=True,
-)
+# Инициализация Sentry только если DSN указан
+sentry_dsn = os.getenv("SENTRY_DSN")
+if sentry_dsn and sentry_dsn.strip():
+    sentry_sdk.init(
+        dsn=sentry_dsn,
+        send_default_pii=True,
+    )
 
 
 app.add_middleware(
@@ -114,7 +117,11 @@ def fetch_alerts_from_api():
     try:
         response = requests.get(url, headers=get_api_headers(), timeout=15)
         response.raise_for_status()
-        return response.json()
+
+        # API возвращает строку со статусами, а не JSON
+        statuses_string = response.text.strip()
+
+        return {"statuses": statuses_string}
     except requests.RequestException as e:
         logger.error(f"Ошибка API запроса: {e}")
         raise
@@ -210,7 +217,7 @@ def periodic_task():
     get_air_alerts_status()
 
     while True:
-        time.sleep(15)  # Пауза между запросами к API
+        time.sleep(60)  # Пауза в 1 минуту между запросами к API
         get_air_alerts_status()
 
 
