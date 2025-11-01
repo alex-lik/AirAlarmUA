@@ -13,6 +13,9 @@ FROM python:3.13-slim
 ENV PATH="/root/.local/bin:$PATH"
 WORKDIR /app
 
+# 📦 Устанавливаем curl для healthcheck
+RUN apt-get update && apt-get install -y curl && apt-get clean && rm -rf /var/lib/apt/lists/*
+
 # 🛠 Копируем зависимости и проект
 COPY --from=builder /root/.local /root/.local
 COPY . .
