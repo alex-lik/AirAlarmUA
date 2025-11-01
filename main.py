@@ -8,6 +8,7 @@ from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.chrome.service import Service
+from selenium.common.exceptions import WebDriverException, TimeoutException
 from loguru import logger
 import sentry_sdk
 import requests
@@ -78,17 +79,44 @@ def check_label(label: str) -> bool:
 def setup_browser():
     global driver
     if driver:
-        return
+        try:
+            # Проверяем, что драйвер еще жив
+            driver.current_url
+            return
+        except (WebDriverException, TimeoutException):
+            logger.warning("Драйвер не отвечает, перезапускаем...")
+            close_browser()
+
     options = Options()
     options.add_argument("--headless")
     options.add_argument("--disable-gpu")
     options.add_argument("--no-sandbox")
+    options.add_argument("--disable-dev-shm-usage")
     options.add_argument("--window-size=1024,768")
+    options.add_argument("--timeout=120")  # Увеличиваем общий таймаут
+
     service = Service(log_path=os.devnull)
     driver = webdriver.Chrome(options=options, service=service)
-    driver.set_page_load_timeout(15)
-    driver.get("https://alerts.in.ua")
+    driver.set_page_load_timeout(30)  # Увеличиваем таймаут загрузки страницы
     driver.implicitly_wait(10)
+
+    try:
+        driver.get("https://alerts.in.ua")
+        logger.info("Браузер успешно запущен и страница загружена")
+    except Exception as e:
+        logger.error(f"Не удалось загрузить страницу: {e}")
+        raise
+
+
+def close_browser():
+    global driver
+    if driver:
+        try:
+            driver.quit()
+        except Exception as e:
+            logger.warning(f"Ошибка при закрытии драйвера: {e}")
+        finally:
+            driver = None
 
 
 def send_telegram_alert(message: str):
@@ -103,47 +131,99 @@ def send_telegram_alert(message: str):
 
 def get_air_alerts_status():
     global alert_status, last_update_time, driver, last_kyiv_status, failure_count
-    try:
-        setup_browser()
-        regions = {}
-        elements = driver.find_elements(By.TAG_NAME, "text")
+    max_retries = 3
+    retry_count = 0
 
-        for el in elements:
-            label = el.text.strip()
-            if not check_label(label):
+    while retry_count < max_retries:
+        try:
+            setup_browser()
+            regions = {}
+
+            # Добавляем попытку найти элементы с таймаутом
+            try:
+                elements = driver.find_elements(By.TAG_NAME, "text")
+            except (WebDriverException, TimeoutException) as e:
+                logger.warning(f"Проблема с поиском элементов (попытка {retry_count + 1}): {e}")
+                retry_count += 1
+                if retry_count < max_retries:
+                    time.sleep(2)  # Пауза между попытками
+                    # Перезапускаем браузер при проблемах
+                    close_browser()
                 continue
-            class_attr = el.get_attribute("class")
-            is_alert = "active" in class_attr
-            regions[label] = is_alert
 
-        alert_status = regions
-        last_update_time = int(time.time())
+            if not elements:
+                logger.warning(f"Элементы не найдены (попытка {retry_count + 1})")
+                retry_count += 1
+                if retry_count < max_retries:
+                    time.sleep(2)
+                    close_browser()
+                continue
 
-        active = sum(1 for v in regions.values() if v)
-        inactive = sum(1 for v in regions.values() if not v)
-        active_regions.labels(status="active").set(active)
-        active_regions.labels(status="inactive").set(inactive)
-        update_timestamp.set(last_update_time)
+            for el in elements:
+                try:
+                    label = el.text.strip()
+                    if not check_label(label):
+                        continue
+                    class_attr = el.get_attribute("class")
+                    is_alert = "active" in class_attr
+                    regions[label] = is_alert
+                except Exception as e:
+                    logger.warning(f"Ошибка обработки элемента: {e}")
+                    continue
 
-        kyiv_status = regions.get("м. Київ")
-        if kyiv_status != last_kyiv_status:
-            last_kyiv_status = kyiv_status
-            if kyiv_status is True:
-                send_telegram_alert("🚨 В Киеве воздушная тревога!")
-            elif kyiv_status is False:
-                send_telegram_alert("✅ В Киеве спокойно.")
+            if not regions:
+                logger.warning(f"Не получено данных о регионах (попытка {retry_count + 1})")
+                retry_count += 1
+                if retry_count < max_retries:
+                    time.sleep(2)
+                    close_browser()
+                continue
 
-        failure_count = 0  # обнуляем ошибки после успеха
+            alert_status = regions
+            last_update_time = int(time.time())
 
-    except Exception as e:
-        failure_count += 1
-        logger.error(f"Ошибка при обновлении тревог: {e}")
-        sentry_sdk.capture_exception(e)
+            active = sum(1 for v in regions.values() if v)
+            inactive = sum(1 for v in regions.values() if not v)
+            active_regions.labels(status="active").set(active)
+            active_regions.labels(status="inactive").set(inactive)
+            update_timestamp.set(last_update_time)
 
-        if failure_count >= MAX_FAILURES:
-            send_telegram_alert(
-                "❌ 5 подряд ошибок при обновлении alerts.in.ua")
-            failure_count = 0
+            kyiv_status = regions.get("м. Київ")
+            if kyiv_status != last_kyiv_status:
+                last_kyiv_status = kyiv_status
+                if kyiv_status is True:
+                    send_telegram_alert("🚨 В Киеве воздушная тревога!")
+                elif kyiv_status is False:
+                    send_telegram_alert("✅ В Киеве спокойно.")
+
+            failure_count = 0  # обнуляем ошибки после успеха
+            logger.info(f"Успешно обновлен статус {len(regions)} регионов")
+            return  # Выходим при успехе
+
+        except WebDriverException as e:
+            retry_count += 1
+            logger.error(f"Ошибка WebDriver (попытка {retry_count}/{max_retries}): {e}")
+            close_browser()  # Принудительно закрываем при проблемах
+
+            if retry_count < max_retries:
+                time.sleep(5)  # Длинная пауза между попытками
+        except Exception as e:
+            retry_count += 1
+            logger.error(f"Общая ошибка (попытка {retry_count}/{max_retries}): {e}")
+            sentry_sdk.capture_exception(e)
+
+            if retry_count < max_retries:
+                time.sleep(5)
+                close_browser()
+
+    # Если все попытки неудачны
+    failure_count += 1
+    logger.error(f"Не удалось обновить статус после {max_retries} попыток")
+
+    if failure_count >= MAX_FAILURES:
+        send_telegram_alert(
+            "❌ Проблемы с обновлением alerts.in.ua - требуется внимание")
+        failure_count = 0
 
 
 def periodic_task():
