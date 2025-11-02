@@ -1,0 +1,32 @@
+# Dockerfile для запуска тестов
+FROM python:3.11-slim
+
+# Устанавливаем рабочую директорию
+WORKDIR /app
+
+# Устанавливаем системные зависимости
+RUN apt-get update && apt-get install -y \
+    gcc \
+    && rm -rf /var/lib/apt/lists/*
+
+# Копируем файл с зависимостями
+COPY requirements.txt .
+
+# Устанавливаем зависимости
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Копируем основной код приложения
+COPY main.py .
+COPY logs/ ./logs/
+
+# Копируем тесты
+COPY test/ ./test/
+
+# Устанавливаем pytest как модуль для запуска
+ENV PYTHONPATH=/app
+
+# Создаем директорию для логов
+RUN mkdir -p logs
+
+# Команда по умолчанию - запуск всех тестов
+CMD ["python", "-m", "pytest", "test/", "-v", "--cov=main", "--cov-report=term-missing"]

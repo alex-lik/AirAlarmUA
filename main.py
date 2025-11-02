@@ -102,10 +102,11 @@ def rate_limit_handler(request: Request, exc: RateLimitExceeded):
 
 def get_api_headers():
     """Возвращает заголовки для API запросов"""
-    if not ALERTS_API_TOKEN:
+    api_token = os.getenv("ALERTS_API_TOKEN")
+    if not api_token:
         raise ValueError("ALERTS_API_TOKEN не установлен в переменных окружения")
     return {
-        "Authorization": f"Bearer {ALERTS_API_TOKEN}",
+        "Authorization": f"Bearer {api_token}",
         "Content-Type": "application/json"
     }
 
@@ -119,7 +120,8 @@ def fetch_alerts_from_api():
         response.raise_for_status()
 
         # API возвращает строку со статусами, а не JSON
-        statuses_string = response.text.strip()
+        text = response.text or ""  # Защита от None
+        statuses_string = text.strip()
 
         return {"statuses": statuses_string}
     except requests.RequestException as e:
@@ -128,11 +130,13 @@ def fetch_alerts_from_api():
 
 
 def send_telegram_alert(message: str):
-    if TELEGRAM_TOKEN and TELEGRAM_CHAT_ID:
-        url = f"https://api.telegram.org/bot{TELEGRAM_TOKEN}/sendMessage"
+    telegram_token = os.getenv("TELEGRAM_TOKEN")
+    telegram_chat_id = os.getenv("TELEGRAM_CHAT_ID")
+    if telegram_token and telegram_chat_id:
+        url = f"https://api.telegram.org/bot{telegram_token}/sendMessage"
         try:
             requests.post(
-                url, json={"chat_id": TELEGRAM_CHAT_ID, "text": message})
+                url, json={"chat_id": telegram_chat_id, "text": message})
         except Exception as e:
             logger.error(f"Ошибка при отправке Telegram: {e}")
 
