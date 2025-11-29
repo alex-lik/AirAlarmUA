@@ -226,6 +226,39 @@ class AlertsApiService:
 
         return found_regions
 
+    def _handle_request_error(self, error: Exception, context: str = "") -> None:
+        """Обработка ошибок запросов.
+
+        Args:
+            error: Исключение
+            context: Контекст ошибки
+        """
+        logger.error(f"Ошибка запроса {context}: {error}")
+        if self.settings.is_sentry_enabled:
+            sentry_sdk.capture_exception(error)
+
+    def _retry_request(self, func, *args, **kwargs):
+        """Повторная попытка выполнения функции с ошибкой.
+
+        Args:
+            func: Функция для выполнения
+            *args: Аргументы функции
+            **kwargs: Именованные аргументы функции
+
+        Returns:
+            Результат выполнения функции
+        """
+        max_retries = getattr(self.settings, 'max_retries', 3)
+
+        for attempt in range(max_retries):
+            try:
+                return func(*args, **kwargs)
+            except Exception as e:
+                if attempt == max_retries - 1:
+                    raise
+                logger.warning(f"Попытка {attempt + 1}/{max_retries} не удалась: {e}")
+                time.sleep(1 * (attempt + 1))  # Экспоненциальная задержка
+
     def close(self) -> None:
         """Закрыть HTTP сессию."""
         if self.session:

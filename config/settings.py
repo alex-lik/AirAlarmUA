@@ -100,5 +100,16 @@ class Settings:
         return bool(self.sentry_dsn and self.sentry_dsn.strip())
 
 
+def reload_settings():
+    """Перезагрузить глобальные настройки из переменных окружения."""
+    global settings
+    # Принудительно перезагружаем переменные окружения
+    if os.path.exists('.env'):
+        load_dotenv(override=True)
+    else:
+        load_dotenv()
+    settings = Settings()
+
+
 # Глобальный экземпляр настроек
 settings = Settings()

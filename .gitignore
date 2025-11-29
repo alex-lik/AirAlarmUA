@@ -126,12 +126,21 @@ celerybeat.pid
 
 # Environments
 .env
+.env.local
+.env.*.local
 .venv
 env/
 venv/
 ENV/
 env.bak/
 venv.bak/
+
+# Docker files
+.dockerignore
+docker-compose.override.yml
+
+# Deployment scripts
+!deploy.sh
 
 # Spyder project settings
 .spyderproject
