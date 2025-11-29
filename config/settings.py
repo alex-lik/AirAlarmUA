@@ -6,6 +6,8 @@
 
 import os
 from typing import Optional
+from dotenv import load_dotenv
+load_dotenv()
 
 
 class Settings:
@@ -50,7 +52,7 @@ class Settings:
     def _validate_settings(self):
         """Провести валидацию настроек."""
         # Валидация токена Telegram
-        if self.telegram_token and not self.telegram_token.startswith('bot'):
+        if self.telegram_token and not self.telegram_token.find(':'):
             raise ValueError('Некорректный формат токена Telegram')
 
         # Валидация токена API alerts.in.ua (только если не в development режиме)
