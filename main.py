@@ -20,7 +20,7 @@ from loguru import logger
 
 from config import settings
 from services import AlertsApiService, TelegramService, TaskScheduler
-from api import alerts_router, monitoring_router
+from api import alerts_router, monitoring_router, simple_router
 from utils import metrics_collector, get_logger
 
 # Инициализация логгера
@@ -114,6 +114,7 @@ def _setup_routers(app: FastAPI) -> None:
     # API роутеры
     app.include_router(alerts_router)
     app.include_router(monitoring_router)
+    app.include_router(simple_router)
 
     logger.info("Роутеры настроены")
 
