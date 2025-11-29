@@ -42,6 +42,9 @@ class Settings:
         # Настройки rate limiting
         self.rate_limit = os.getenv("RATE_LIMIT", "100/10minutes")
 
+        # Настройки порта
+        self.port = int(os.getenv("PORT", "8500"))
+
         # CORS настройки
         cors_origins_env = os.getenv("CORS_ORIGINS", "*")
         self.cors_origins = [origin.strip() for origin in cors_origins_env.split(",")]
@@ -73,6 +76,10 @@ class Settings:
             raise ValueError('MAX_FAILURES должен быть положительным числом')
         if self.request_timeout <= 0:
             raise ValueError('REQUEST_TIMEOUT должен быть положительным числом')
+
+        # Валидация порта
+        if not (1 <= self.port <= 65535):
+            raise ValueError('PORT должен быть в диапазоне 1-65535')
 
     @property
     def is_telegram_enabled(self) -> bool:

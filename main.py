@@ -349,11 +349,11 @@ async def debug_services():
 if __name__ == "__main__":
     import uvicorn
 
-    logger.info(f"Запуск сервера на порту 8000")
+    logger.info(f"Запуск сервера на порту {settings.port}")
     uvicorn.run(
         "main:app",
         host="0.0.0.0",
-        port=8001,
+        port=settings.port,
         reload=True,
         log_level="info"
     )
