@@ -349,3 +349,6 @@ def get_rate_limit_handler():
             }
         )
     return rate_limit_handler
+
+if __name__ == "__main__":
+    get_all_alerts_status()
