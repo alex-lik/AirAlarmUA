@@ -6,5 +6,6 @@
 
 from .alerts import alerts_router
 from .monitoring import monitoring_router
+from .simple import simple_router
 
-__all__ = ["alerts_router", "monitoring_router"]
+__all__ = ["alerts_router", "monitoring_router", "simple_router"]
