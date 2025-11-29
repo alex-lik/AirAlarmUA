@@ -7,3 +7,13 @@ from .settings import settings
 from .regions import REGIONS_UID_MAP, REGIONS_LIST, SORTED_UID_LIST, PRIORITY_CITIES
 
 __all__ = ["settings", "REGIONS_UID_MAP", "REGIONS_LIST", "SORTED_UID_LIST", "PRIORITY_CITIES"]
+
+
+def reload_config():
+    """Перезагрузить конфигурацию из переменных окружения.
+
+    Returns:
+        None: Просто перезагружает конфигурацию
+    """
+    from .settings import reload_settings
+    reload_settings()
