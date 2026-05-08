@@ -17,12 +17,14 @@ services:
       - REQUEST_TIMEOUT=10
       - MAX_RETRIES=3
       - RATE_LIMIT="100/minute"
+      # API настройки
+      - ALERTS_API_TOKEN=${ALERTS_API_TOKEN}
+      - ALERTS_API_URL=${ALERTS_API_URL:-https://api.alerts.in.ua/v1/iot/active_air_raid_alerts.json}
+      # Telegram настройки
+      - TELEGRAM_TOKEN=${TELEGRAM_TOKEN}
+      - TELEGRAM_CHAT_ID=${TELEGRAM_CHAT_ID}
       # Sentry DSN (должен быть установлен через секреты)
       - SENTRY_DSN=${SENTRY_DSN}
-      # Telegram настройки
-      - TELEGRAM_BOT_TOKEN=${TELEGRAM_BOT_TOKEN}
-      - TELEGRAM_CHAT_IDS=${TELEGRAM_CHAT_IDS}
-      - IS_TELEGRAM_ENABLED=true
       # Метрики
       - IS_PROMETHEUS_ENABLED=true
       - PROMETHEUS_PORT=9091
