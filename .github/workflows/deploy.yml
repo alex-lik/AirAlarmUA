@@ -8,7 +8,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Copy project to server
         uses: appleboy/scp-action@master
@@ -31,6 +31,8 @@ jobs:
             cd /home/prod/air-alert-api
             echo "${{ secrets.ENV_FILE }}" > .env
             echo "SENTRY_DSN=${{ secrets.SENTRY_DSN }}" >> .env
-            docker compose build
-            docker compose down
-            docker compose up -d
+            docker compose -f docker-compose.prod.yml down --remove-orphans || true
+            docker rm -f air-alert-api || true
+            docker compose -f docker-compose.prod.yml up -d --build --remove-orphans
+            docker compose -f docker-compose.prod.yml ps
+            docker compose -f docker-compose.prod.yml logs --tail=20

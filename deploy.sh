@@ -20,13 +20,14 @@ else
 fi
 
 echo "Stopping existing containers..."
-docker compose -f docker-compose.prod.yml down || true
+docker compose -f docker-compose.prod.yml down --remove-orphans || true
+docker rm -f air-alert-api || true
 
 echo "Building image..."
 docker compose -f docker-compose.prod.yml build --no-cache
 
 echo "Starting service..."
-docker compose -f docker-compose.prod.yml up -d
+docker compose -f docker-compose.prod.yml up -d --remove-orphans
 
 echo "Checking status..."
 sleep 10
