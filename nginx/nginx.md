@@ -1,29 +1,27 @@
+## HTTPS via Nginx + Let's Encrypt
 
-## 🔐 Настройка HTTPS через Nginx и Let's Encrypt
+1. Install Nginx:
 
-1. Установите Nginx:
 ```bash
 sudo apt update
 sudo apt install nginx
 ```
 
-2. Скопируйте конфиг в /etc/nginx/sites-available/air-alert:
-```bash
-sudo nano /etc/nginx/sites-available/air-alert
-# вставьте содержимое из nginx.conf
-```
+2. Copy the config:
 
-3. Активируйте сайт:
 ```bash
+sudo cp nginx/nginx.conf /etc/nginx/sites-available/air-alert
+# set your real server_name first
 sudo ln -s /etc/nginx/sites-available/air-alert /etc/nginx/sites-enabled/
 sudo nginx -t
 sudo systemctl reload nginx
 ```
 
-4. Установите certbot и получите сертификат:
+3. Issue a certificate:
+
 ```bash
 sudo apt install certbot python3-certbot-nginx
-sudo certbot --nginx -d alerts.example.com
+sudo certbot --nginx -d your-domain.example.com
 ```
 
-5. Готово! Nginx проксирует запросы к FastAPI и обслуживает HTTPS.
+Nginx proxies requests to FastAPI on `127.0.0.1:8000`.

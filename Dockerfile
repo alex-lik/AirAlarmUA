@@ -1,25 +1,27 @@
-
-# ===== Stage 1: Build dependencies =====
-FROM python:3.13-slim as builder
+# Stage 1: build dependencies
+FROM python:3.13-slim AS builder
 
 WORKDIR /build
 COPY requirements.txt .
-RUN pip install --upgrade pip && pip install --user -r requirements.txt
+RUN pip install --upgrade pip && pip install --user --no-cache-dir -r requirements.txt
 
-
-# ===== Stage 2: Final image =====
+# Stage 2: runtime image
 FROM python:3.13-slim
 
 ENV PATH="/root/.local/bin:$PATH"
 WORKDIR /app
 
-# 📦 Устанавливаем curl для healthcheck
-RUN apt-get update && apt-get install -y curl && apt-get clean && rm -rf /var/lib/apt/lists/*
+# Install curl for healthcheck
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends curl \
+    && rm -rf /var/lib/apt/lists/*
 
-# 🛠 Копируем зависимости и проект
 COPY --from=builder /root/.local /root/.local
 COPY . .
 
 EXPOSE 8000
+
+HEALTHCHECK --interval=30s --timeout=10s --retries=3 \
+  CMD curl -f http://localhost:8000/health || exit 1
 
 CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
