@@ -9,7 +9,6 @@ from .alert import (
     RegionStatus,
     AlertSystemStatus,
     ApiError,
-    NotificationMessage,
     HealthCheckResponse
 )
 
@@ -18,6 +17,5 @@ __all__ = [
     "RegionStatus",
     "AlertSystemStatus",
     "ApiError",
-    "NotificationMessage",
     "HealthCheckResponse"
 ]

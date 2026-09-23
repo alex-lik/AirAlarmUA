@@ -5,12 +5,10 @@
 без префикса /api/v1.
 """
 
-import time
 from fastapi import APIRouter
 from services import AlertsApiService
 from models import AlertSystemStatus, HealthCheckResponse
 from utils import metrics_collector, get_logger
-from config import settings
 
 # Создание роутера без префикса
 simple_router = APIRouter(tags=["simple"])

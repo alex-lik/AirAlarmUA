@@ -6,13 +6,10 @@
 
 import time
 from typing import Dict, Optional
-from contextlib import asynccontextmanager
 
 from fastapi import APIRouter, Request, HTTPException, Depends
 from slowapi import Limiter
 from slowapi.util import get_remote_address
-from slowapi.errors import RateLimitExceeded
-from fastapi.responses import JSONResponse
 
 from services import AlertsApiService
 from models import AlertSystemStatus, HealthCheckResponse
@@ -334,21 +331,3 @@ async def get_statistics(request: Request) -> Dict:
 
         logger.error(f"Ошибка при получении статистики: {e}")
         raise HTTPException(status_code=500, detail="Ошибка получения статистики")
-
-
-# Функция обработчик для передачи в main.py
-def get_rate_limit_handler():
-    """Получить обработчик превышения лимита запросов."""
-    async def rate_limit_handler(request: Request, exc: RateLimitExceeded):
-        """Обработчик превышения лимита запросов."""
-        return JSONResponse(
-            status_code=429,
-            content={
-                "detail": "Слишком много запросов",
-                "error": "rate_limit_exceeded"
-            }
-        )
-    return rate_limit_handler
-
-if __name__ == "__main__":
-    get_all_alerts_status()

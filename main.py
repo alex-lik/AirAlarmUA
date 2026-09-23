@@ -4,7 +4,6 @@ FastAPI приложение для мониторинга воздушных т
 с интеграцией Telegram уведомлений и Prometheus метрик.
 """
 
-import asyncio
 from contextlib import asynccontextmanager
 from typing import Optional
 

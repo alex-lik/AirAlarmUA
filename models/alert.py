@@ -5,7 +5,7 @@
 """
 
 from datetime import datetime
-from typing import Dict, List, Optional
+from typing import Dict, Optional
 from enum import Enum
 from pydantic import BaseModel, Field
 
@@ -107,28 +107,6 @@ class ApiError(BaseModel):
     timestamp: datetime = Field(
         default_factory=datetime.utcnow,
         description="Время возникновения ошибки"
-    )
-
-
-class NotificationMessage(BaseModel):
-    """Модель уведомления.
-
-    Attributes:
-        message: Текст сообщения
-        priority: Приоритет уведомления
-        timestamp: Время создания уведомления
-        channels: Каналы отправки
-    """
-
-    message: str = Field(..., description="Текст сообщения")
-    priority: str = Field(default="normal", description="Приоритет уведомления")
-    timestamp: datetime = Field(
-        default_factory=datetime.utcnow,
-        description="Время создания уведомления"
-    )
-    channels: List[str] = Field(
-        default_factory=lambda: ["telegram"],
-        description="Каналы отправки уведомления"
     )
 
 

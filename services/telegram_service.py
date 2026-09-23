@@ -4,7 +4,6 @@
 уведомлений о воздушных тревогах.
 """
 
-import asyncio
 from typing import Optional, List
 from datetime import datetime
 
@@ -12,7 +11,6 @@ import requests
 from loguru import logger
 
 from config import settings, PRIORITY_CITIES
-from models import NotificationMessage, ApiError
 
 
 class TelegramService:

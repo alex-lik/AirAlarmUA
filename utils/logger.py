@@ -7,7 +7,7 @@
 import sys
 import os
 from pathlib import Path
-from typing import Optional, List
+from typing import Optional
 from loguru import logger
 
 
@@ -96,103 +96,11 @@ def get_logger(name: str = None):
     return logger
 
 
-class ContextLogger:
-    """Контекстный логгер для добавления контекста к сообщениям.
-
-    Позволяет добавлять контекстную информацию (request_id, user_id и т.д.)
-    ко всем сообщениям в рамках одного контекста.
-    """
-
-    def __init__(self, **context):
-        """Инициализация контекстного логгера.
-
-        Args:
-            **context: Контекстные параметры
-        """
-        self.context = context
-        self.logger = logger.bind(**context)
-
-    def info(self, message: str, **kwargs):
-        """Логировать INFO сообщение."""
-        self.logger.info(message, **kwargs)
-
-    def warning(self, message: str, **kwargs):
-        """Логировать WARNING сообщение."""
-        self.logger.warning(message, **kwargs)
-
-    def error(self, message: str, **kwargs):
-        """Логировать ERROR сообщение."""
-        self.logger.error(message, **kwargs)
-
-    def debug(self, message: str, **kwargs):
-        """Логировать DEBUG сообщение."""
-        self.logger.debug(message, **kwargs)
-
-    def critical(self, message: str, **kwargs):
-        """Логировать CRITICAL сообщение."""
-        self.logger.critical(message, **kwargs)
-
-    def bind(self, **kwargs):
-        """Добавить новый контекст.
-
-        Args:
-            **kwargs: Новые контекстные параметры
-
-        Returns:
-            ContextLogger: Новый экземпляр с расширенным контекстом
-        """
-        new_context = {**self.context, **kwargs}
-        return ContextLogger(**new_context)
-
-
-def log_function_call(func_name: str, args: tuple = None, kwargs: dict = None):
-    """Логировать вызов функции.
-
-    Args:
-        func_name: Имя функции
-        args: Позиционные аргументы
-        kwargs: Именованные аргументы
-    """
-    args_str = str(args) if args else "()"
-    kwargs_str = str(kwargs) if kwargs else ""
-
-    if kwargs_str:
-        full_args = f"{args_str}, {kwargs_str}"
-    else:
-        full_args = args_str
-
-    logger.debug(f"Вызов функции {func_name}{full_args}")
-
-
-def log_api_request(method: str, url: str, status_code: int, duration: float):
-    """Логировать API запрос.
-
-    Args:
-        method: HTTP метод
-        url: URL запроса
-        status_code: Код ответа
-        duration: Длительность запроса
-    """
-    status_emoji = "✅" if 200 <= status_code < 300 else "❌"
-    logger.info(
-        f"{status_emoji} {method} {url} -> {status_code} ({duration:.3f}s)"
-    )
-
-
-def log_error_with_context(error: Exception, context: dict = None):
-    """Логировать ошибку с контекстом.
-
-    Args:
-        error: Исключение
-        context: Контекстная информация
-    """
-    context_str = f" | Контекст: {context}" if context else ""
-    logger.error(f"Ошибка: {type(error).__name__}: {error}{context_str}")
-
-
 # Инициализация логирования по умолчанию
+# Файловый вывод включается только через LOG_FILE, чтобы импорт модуля
+# не создавал файлы и директории как побочный эффект.
 setup_logging(
     log_level=os.getenv("LOG_LEVEL", "INFO"),
-    log_file="./logs/today.log",
+    log_file=os.getenv("LOG_FILE"),
     enable_console=True
 )

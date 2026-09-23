@@ -5,7 +5,7 @@
 """
 
 import time
-from typing import Dict, Optional
+from typing import Optional
 from datetime import datetime
 
 from prometheus_client import Gauge, Counter, Histogram, generate_latest, CONTENT_TYPE_LATEST
@@ -228,27 +228,6 @@ class MetricsCollector:
         except Exception as e:
             logger.error(f"Ошибка при генерации метрик: {e}")
             return ""
-
-    def get_metrics_summary(self) -> Dict[str, float]:
-        """Получить сводную информацию о метриках.
-
-        Returns:
-            Dict[str, float]: Словарь с основными метриками
-        """
-        try:
-            # Получаем значения метрик через реестр
-            summary = {}
-
-            for metric in self.registry._collector_to_names:
-                for name, collector in self.registry._collector_to_names.items():
-                    if hasattr(collector, '_value'):
-                        summary[name] = collector._value
-
-            return summary
-
-        except Exception as e:
-            logger.error(f"Ошибка при получении сводки метрик: {e}")
-            return {}
 
 
 # Глобальный экземпляр коллектора метрик

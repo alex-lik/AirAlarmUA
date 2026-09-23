@@ -5,9 +5,8 @@
 """
 
 import time
-from contextlib import asynccontextmanager
 
-from fastapi import APIRouter, Request, Response
+from fastapi import APIRouter
 from fastapi.responses import PlainTextResponse
 
 from utils import metrics_collector, get_logger
@@ -68,7 +67,7 @@ async def trigger_sentry_error():
     Данный эндпоинт используется только для отладки
     и должен быть отключен в production.
     """
-    if "production" in settings.cors_origins or settings.cors_origins != ["*"]:
+    if settings.cors_origins != ["*"]:
         return {"error": "Debug endpoint disabled in production"}
 
     logger.warning("Triggered debug error for Sentry")

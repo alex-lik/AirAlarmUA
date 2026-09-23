@@ -5,8 +5,9 @@
 """
 
 import os
-from typing import Optional
+import warnings
 from dotenv import load_dotenv
+
 load_dotenv()
 
 
@@ -55,14 +56,13 @@ class Settings:
     def _validate_settings(self):
         """Провести валидацию настроек."""
         # Валидация токена Telegram
-        if self.telegram_token and not self.telegram_token.find(':'):
+        if self.telegram_token and ":" not in self.telegram_token:
             raise ValueError('Некорректный формат токена Telegram')
 
         # Валидация токена API alerts.in.ua (только если не в development режиме)
         if not self.alerts_api_token or len(self.alerts_api_token) < 10:
             # Пропускаем валидацию в development если токен не задан
             if self.alerts_api_token == "":
-                import warnings
                 warnings.warn("ALERTS_API_TOKEN не настроен, приложение работает в development режиме")
             else:
                 raise ValueError('Токен API alerts.in.ua должен содержать минимум 10 символов')
@@ -103,11 +103,7 @@ class Settings:
 def reload_settings():
     """Перезагрузить глобальные настройки из переменных окружения."""
     global settings
-    # Принудительно перезагружаем переменные окружения
-    if os.path.exists('.env'):
-        load_dotenv(override=True)
-    else:
-        load_dotenv()
+    load_dotenv(override=True)
     settings = Settings()
 
 
